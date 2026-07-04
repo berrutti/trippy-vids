@@ -8,7 +8,7 @@ export default defineConfig({
     alias: { '@': resolve(__dirname, './src') }
   },
   server: {
-    port: 1420,
+    port: Number(process.env.VITE_DEV_PORT) || 1420,
     strictPort: true
   },
   build: {

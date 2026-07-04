@@ -9,6 +9,7 @@
         min="40"
         max="300"
         step="0.1"
+        :disabled="beatmatcherFollowing"
         @focus="bpmFocused = true"
         @blur="bpmFocused = false"
         @input="localBpm = Number(($event.target as HTMLInputElement).value)"
@@ -18,6 +19,23 @@
       <span v-if="randomizeBeat" class="beat-counter">
         {{ randomizeBeat.beat }}&thinsp;/&thinsp;{{ randomizeBeat.total }}
       </span>
+    </div>
+
+    <div class="beat-source-row">
+      <span
+        class="beatmatcher-status"
+        :class="beatmatcherConnected ? 'beatmatcher-status--on' : 'beatmatcher-status--off'"
+      >
+        {{ beatmatcherStatusText }}
+      </span>
+      <button
+        v-if="randomizeBeat"
+        class="restart-beat-btn"
+        title="Restart randomize's phrase count from now. Use this if a Beatmatcher deck's grid is mis-analyzed, or to resync manual-BPM switches to what you're hearing."
+        @click="emit('restart-beat')"
+      >
+        Restart beat
+      </button>
     </div>
 
     <div v-if="midiConnected" class="midi-status">
@@ -92,6 +110,7 @@
 import { computed, ref, watch } from 'vue';
 import { ShaderEffect, shaderEffects } from '@/utils';
 import { KNOB_EFFECT_ORDER, KNOB_BANK_SIZE, KNOB_BANK_COUNT } from '@/composables/useMidi';
+import type { BeatmatcherDeck } from '@/composables/useBeatmatcherLink';
 
 const props = withDefaults(
   defineProps<{
@@ -104,6 +123,10 @@ const props = withDefaults(
     midiActiveBank?: number;
     bpm: number;
     randomizeBeat?: { beat: number; total: number } | null;
+    beatmatcherAvgBpm: number | null;
+    beatmatcherConnected: boolean;
+    beatmatcherDecks: BeatmatcherDeck[];
+    beatmatcherFollowing: boolean;
   }>(),
   {
     midiConnected: false,
@@ -119,7 +142,16 @@ const emit = defineEmits<{
   'bpm-sync-change': [effect: ShaderEffect, enabled: boolean];
   'toggle-help': [];
   'bpm-change': [bpm: number];
+  'restart-beat': [];
 }>();
+
+const beatmatcherStatusText = computed(() => {
+  if (!props.beatmatcherConnected) return 'Beatmatcher: not connected';
+  if (!props.beatmatcherFollowing) return 'Beatmatcher: connected, no deck playing';
+  const playing = props.beatmatcherDecks.filter((d) => d.isPlaying && d.effectiveBpm !== null);
+  const deckIds = playing.map((d) => d.id).join(', ');
+  return `Following ${deckIds}: ${props.beatmatcherAvgBpm?.toFixed(1)} BPM`;
+});
 
 const midiControlledEffects = computed<ReadonlySet<ShaderEffect>>(() => {
   if (!props.midiConnected) return new Set();

@@ -46,6 +46,29 @@ describe('useRandomizeMode', () => {
     cleanup();
   });
 
+  it('re-anchors from now instead of rapid-firing catch-up switches after a long gap in a beat-driven clock', () => {
+    const onApply = vi.fn();
+    let beatNow = 0;
+    const [result, cleanup] = withSetup(() =>
+      useRandomizeMode(ref(120), ref(makePlaylist(2)), ref(0), onApply, undefined, () => beatNow)
+    );
+    result.toggle();
+    onApply.mockClear();
+
+    // Simulate a long gap (system sleep, backgrounded tab, etc.): the external beat
+    // clock jumps far past the next scheduled switch target in one poll tick.
+    beatNow = 10000;
+    vi.advanceTimersByTime(50);
+    expect(onApply).toHaveBeenCalledTimes(1);
+
+    // Having re-anchored to "now", it must not immediately fire again on the very
+    // next poll tick even though beatNow is still numerically past the old target.
+    vi.advanceTimersByTime(50);
+    expect(onApply).toHaveBeenCalledTimes(1);
+
+    cleanup();
+  });
+
   it('calls onSchedule when the next snapshot is queued', () => {
     const onApply = vi.fn();
     const onSchedule = vi.fn();

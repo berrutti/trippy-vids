@@ -1,5 +1,6 @@
 import type { ShaderEffect } from './utils';
 import type { VideoPlaylistItem } from './components/input/useVideoPlaylist';
+import type { BeatmatcherDeck } from './composables/useBeatmatcherLink';
 
 export const CHANNEL_NAME = 'performer-controls';
 
@@ -7,6 +8,10 @@ export type InputSource = 'webcam' | 'video';
 
 export interface AppState {
   activeEffects: Record<ShaderEffect, boolean>;
+  beatmatcherAvgBpm: number | null;
+  beatmatcherConnected: boolean;
+  beatmatcherDecks: BeatmatcherDeck[];
+  beatmatcherFollowing: boolean;
   bpm: number;
   bpmSyncEnabled: Record<ShaderEffect, boolean>;
   currentTime: number;
@@ -39,6 +44,7 @@ export type FromControls =
   | { type: 'previous-video' }
   | { type: 'remove-from-playlist'; id: string }
   | { type: 'request-state' }
+  | { type: 'restart-beat' }
   | { type: 'seek-end' }
   | { type: 'toggle-randomize' }
   | { type: 'seek-start' }

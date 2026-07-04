@@ -18,6 +18,10 @@ export interface UseWebGPURendererOptions {
   effectIntensities: ComputedRef<Record<ShaderEffect, number>>;
   bpmSyncEnabled: ComputedRef<Record<ShaderEffect, boolean>>;
   bpm: Ref<number>;
+  // Called once per frame. When it returns a value, that time/bpm pair is fed to the
+  // uniform buffer instead of the free-running clock and manual bpm, phase-locking the
+  // existing beatPeriod/beatPhase shader math to an external clock (e.g. Beatmatcher).
+  getBeatClock?: () => { time: number; bpm: number } | null;
   onRenderPerformance?: (fps: number, frameTime: number) => void;
   onVideoNotRenderable?: () => void;
   onFrameQuality?: (lumaAvg: number, variance: number) => void;
@@ -212,12 +216,13 @@ function writeUniforms(
   options: UseWebGPURendererOptions,
   timeSec: number
 ): void {
-  const { bpm: bpmRef, effectIntensities, bpmSyncEnabled } = options;
+  const { bpm: bpmRef, effectIntensities, bpmSyncEnabled, getBeatClock } = options;
   const intensities = effectIntensities.value;
   const sync = bpmSyncEnabled.value;
+  const beatClock = getBeatClock?.();
 
-  data[UNIFORM_IDX.time] = timeSec;
-  data[UNIFORM_IDX.bpm] = bpmRef.value;
+  data[UNIFORM_IDX.time] = beatClock?.time ?? timeSec;
+  data[UNIFORM_IDX.bpm] = beatClock?.bpm ?? bpmRef.value;
 
   for (const effect of Object.values(ShaderEffect)) {
     const iIdx = UNIFORM_IDX.intensity[effect];
