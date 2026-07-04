@@ -1,3 +1,4 @@
+mod beatmatcher;
 mod midi;
 
 use tauri::menu::{AboutMetadataBuilder, MenuBuilder, PredefinedMenuItem, SubmenuBuilder};
@@ -11,6 +12,7 @@ pub fn run() {
         .manage(midi::MidiState::default())
         .setup(|app| {
             midi::start(app.handle().clone());
+            beatmatcher::start(app.handle().clone());
             let icon = app.default_window_icon().cloned();
             let about = AboutMetadataBuilder::new()
                 .name(Some("Performer"))

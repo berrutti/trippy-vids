@@ -156,12 +156,56 @@
   border-color: var(--color-accent);
 }
 
+.bpm-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .beat-counter {
   font-size: 13px;
   font-weight: 600;
   color: var(--color-accent);
   letter-spacing: 0.04em;
   min-width: 52px;
+}
+
+.beat-source-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.restart-beat-btn {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font);
+  transition:
+    border-color 0.12s,
+    background 0.12s;
+}
+
+.restart-beat-btn:hover {
+  background: var(--color-surface-2);
+  border-color: var(--color-border-2);
+}
+
+.beatmatcher-status {
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.beatmatcher-status--on {
+  color: var(--color-accent);
+}
+
+.beatmatcher-status--off {
+  color: var(--color-muted);
 }
 
 /* Effects Grid */

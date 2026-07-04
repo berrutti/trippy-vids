@@ -39,10 +39,14 @@
       <div>Right click to open controls | Spacebar to play / pause</div>
       <div class="help-stats">
         Version: {{ VERSION }} | GPU FPS: {{ fps }} | Frame Time: {{ frameTime.toFixed(2) }}ms
-        <span v-if="midi.connected.value" class="midi-connected"
+        <span v-if="midi.connected.value" class="external-connected"
           >MIDI: {{ midi.deviceName.value }}</span
         >
         <span v-else class="midi-disconnected">MIDI: Not connected</span>
+        <span v-if="beatmatcher.connected.value" class="external-connected"
+          >Beatmatcher: connected</span
+        >
+        <span v-else class="midi-disconnected">Beatmatcher: not connected</span>
       </div>
       <div v-if="showMidiSyncNotification" class="midi-sync-notification">
         MIDI Connected! Move each knob slightly to sync with current positions
@@ -61,6 +65,7 @@ import { useVideoPlaylist } from '@/components/input/useVideoPlaylist';
 import { useVideoPlayer } from '@/components/input/useVideoPlayer';
 import { useVideoSource } from '@/components/input/useVideoSource';
 import { useMidi } from '@/composables/useMidi';
+import { useBeatmatcherLink } from '@/composables/useBeatmatcherLink';
 import { useWebGPURenderer } from '@/composables/useWebGPURenderer';
 import { useRandomizeMode } from '@/composables/useRandomizeMode';
 import { useFrameQualityGuard } from '@/composables/useFrameQualityGuard';
@@ -98,6 +103,7 @@ const initialIntensities = buildEffectRecord((e) => shaderEffects[e].intensity ?
 
 const settings = useSettings();
 const bpm = settings.bpm;
+const beatmatcher = useBeatmatcherLink();
 const effectTransitions = useEffectTransitions(initialActiveEffects, initialIntensities);
 const playlist = useVideoPlaylist(settings.inputSource);
 const player = useVideoPlayer({
@@ -121,7 +127,8 @@ const randomize = useRandomizeMode(
     effectTransitions.setEffectIntensities(snapshot.intensities);
     player.applyVideoSnapshot(snapshot);
   },
-  player.preloadUpcomingVideo
+  player.preloadUpcomingVideo,
+  () => beatmatcher.getBeatNow()
 );
 
 watch(
@@ -157,6 +164,7 @@ useWebGPURenderer({
   effectIntensities: effectTransitions.renderingIntensities,
   bpmSyncEnabled: computed(() => effectTransitions.bpmSyncEnabled.value),
   bpm,
+  getBeatClock: () => beatmatcher.getBeatClock(),
   onRenderPerformance: handleRenderPerformance,
   onFrameQuality: (lumaAvg, variance) => {
     if (randomize.isActive.value) onQualityData(lumaAvg, variance);
@@ -196,6 +204,10 @@ const showNoVideoMessage = computed(
 
 const appState = computed(() => ({
   activeEffects: { ...effectTransitions.activeEffects.value },
+  beatmatcherAvgBpm: beatmatcher.getAverageBpm(),
+  beatmatcherConnected: beatmatcher.connected.value,
+  beatmatcherDecks: beatmatcher.decks.value.map((deck) => ({ ...deck })),
+  beatmatcherFollowing: beatmatcher.getAverageBpm() !== null,
   effectIntensities: { ...effectTransitions.effectIntensities.value },
   bpmSyncEnabled: { ...effectTransitions.bpmSyncEnabled.value },
   inputSource: settings.inputSource.value,
@@ -239,6 +251,9 @@ function handleAction(msg: FromControls) {
       break;
     case 'bpm-change':
       bpm.value = msg.bpm;
+      break;
+    case 'restart-beat':
+      randomize.restartBeat();
       break;
     case 'bpm-sync-change':
       effectTransitions.setBpmSyncEnabled(msg.effect, msg.enabled);
@@ -398,7 +413,7 @@ async function openControls() {
   opacity: 0.8;
 }
 
-.midi-connected {
+.external-connected {
   color: #a855f7;
   margin-left: 10px;
 }

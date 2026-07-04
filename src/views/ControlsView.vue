@@ -35,6 +35,10 @@
         :midi-active-bank="state.midiActiveBank"
         :bpm="state.bpm"
         :randomize-beat="state.randomizeBeat"
+        :beatmatcher-avg-bpm="state.beatmatcherAvgBpm"
+        :beatmatcher-connected="state.beatmatcherConnected"
+        :beatmatcher-decks="state.beatmatcherDecks"
+        :beatmatcher-following="state.beatmatcherFollowing"
         @toggle-effect="send({ type: 'toggle-effect', effect: $event })"
         @intensity-change="
           (effect, intensity) => send({ type: 'intensity-change', effect, intensity })
@@ -42,6 +46,7 @@
         @toggle-help="send({ type: 'toggle-help' })"
         @bpm-change="send({ type: 'bpm-change', bpm: $event })"
         @bpm-sync-change="(effect, enabled) => send({ type: 'bpm-sync-change', effect, enabled })"
+        @restart-beat="send({ type: 'restart-beat' })"
       />
     </div>
   </div>
