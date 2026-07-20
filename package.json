@@ -24,9 +24,9 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",
-    "@tauri-apps/plugin-dialog": "^2.7.1",
-    "@tauri-apps/plugin-store": "^2.4.3",
-    "vue": "^3.5.39"
+    "@tauri-apps/plugin-dialog": "^2.7.2",
+    "@tauri-apps/plugin-store": "^2.4.4",
+    "vue": "^3.5.40"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
